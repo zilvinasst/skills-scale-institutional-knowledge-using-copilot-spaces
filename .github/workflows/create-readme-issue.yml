@@ -1,0 +1,83 @@
+name: Create README Issue
+
+on:
+  push:
+    branches:
+      - "main"
+      - "copilot/**"
+    paths:
+      - "docs/README.md"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  create_readme_issue:
+    name: Create README Issue
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create issue using template
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const issueBody = [
+              "### Which process document do you want to update? (If this is a new document, select '<new document>')",
+              "",
+              "<new document>",
+              "",
+              "### Summary of New Content",
+              "",
+              "Add a README to the `docs/` folder for the OctoAcme Project Management Docs that includes:",
+              "- A brief summary of OctoAcme's project management processes",
+              "- Links to all documents in the `docs/` folder:",
+              "  - [Project Management Overview](docs/octoacme-project-management-overview.md)",
+              "  - [Project Initiation](docs/octoacme-project-initiation.md)",
+              "  - [Project Planning](docs/octoacme-project-planning.md)",
+              "  - [Execution & Tracking](docs/octoacme-execution-and-tracking.md)",
+              "  - [Risks & Communication](docs/octoacme-risks-and-communication.md)",
+              "  - [Release & Deployment](docs/octoacme-release-and-deployment.md)",
+              "  - [Retrospective & Continuous Improvement](docs/octoacme-retrospective-and-continuous-improvement.md)",
+              "  - [Roles & Personas](docs/octoacme-roles-and-personas.md)",
+              "",
+              "### Why is this update needed?",
+              "",
+              "The `docs/` folder contains multiple process documents but lacks a central README with a project management processes summary and links to navigate them easily. A README with links improves discoverability and provides a concise project management processes summary for new team members and contributors.",
+              "",
+              "### Suggested Content (optional)",
+              "",
+              "See the newly added `docs/README.md` file in this branch which provides:",
+              "- A summary of OctoAcme's iterative, customer-first project management approach",
+              "- A table with links to all process documents",
+              "",
+              "### Acceptance Criteria",
+              "",
+              "- [x] Content aligns with existing process docs",
+              "- [x] Update improves clarity or closes a documented gap",
+              "- [x] Proposed content has been reviewed with stakeholders (if needed)"
+            ].join("\n");
+
+            const title = "[Process Doc Update]: README with project management processes summary and links for OctoAcme Project Management Docs";
+
+            // Check if an issue with this title already exists to avoid duplicates
+            const existingIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open"
+            });
+
+            const alreadyExists = existingIssues.data.some(issue => issue.title === title);
+            if (alreadyExists) {
+              console.log("Issue already exists, skipping creation.");
+              return;
+            }
+
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: issueBody
+            });
+
+            console.log(`Created issue #${issue.data.number}: ${issue.data.html_url}`);
